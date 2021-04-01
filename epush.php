@@ -9,7 +9,7 @@
     * License: GNU General Public License v3 or later
     * License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
     * Text Domain: e-Push
-    * GitHub Plugin URI: 
+    * GitHub Plugin URI: https://github.com/wallace-stev/epush-selcom-wp
     * Domain Path: /i18n
 */
 
