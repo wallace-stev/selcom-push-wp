@@ -9,7 +9,7 @@
     * License: GNU General Public License v3 or later
     * License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
     * Text Domain: e-Push
-    * GitHub Plugin URI: https://github.com/wallace-stev/epush-selcom-wp
+    * GitHub Plugin URI: https://github.com/wallace-stev/epush-selcom-wp 
     * Domain Path: /i18n
 */
 
@@ -57,8 +57,8 @@ function selcom_init() {
                 'description' => array(
                     'title'         => __( 'Customer Message', 'woocommerce' ),
                     'type'          => 'textarea',
-                    'default'       => 'Pay directly from your mobile phone using Tigopesa or Airtel Money.',
-                    'description'   => 'Pay directly from your mobile phone using Tigopesa or Airtel Money.',
+                    'default'       => 'Pay directly from your mobile phone using Tigopesa or Airtel Money. Conveniently, securely & efficiently.',
+                    'description'   => 'Pay directly from your mobile phone using Tigopesa or Airtel Money. Conveniently, securely & efficiently.',
                 )
             );
         }
@@ -66,34 +66,93 @@ function selcom_init() {
         function process_payment( $order_id ) {
             global $woocommerce;
 
+            // Get an instance of the WC_Order object
             $order = new WC_Order( $order_id );
 
-            /****
-
-                Here is where you need to call your payment gateway API to process the payment
-                You can use cURL or wp_remote_get()/wp_remote_post() to send data and receive response from your API.
-
-            ****/
-
-            //Based on the response from your payment gateway, you can set the the order status to processing or completed if successful:
-            $order->update_status('on-hold', __( 'FAIL', 'woocommerce' ));
-
-            //Error handling
-            wc_add_notice( __('Payment error: ', 'woothemes') . 'Transaction failed', 'error' );
+            //Process payment via Selcom API using cURL and receive API.            
+            $api_key = 'xxxxxxxxxxxxxxxxxxx';
+            $api_secret = 'xxxxxxxxxxxxxxxxxxxxx';
             
-            //once the order is updated clear the cart and reduce the stock
-            $woocommerce->cart->empty_cart();
-            $order->reduce_order_stock();
-
-            //if the payment processing was successful, return an array with result as success and redirect to the order-received/thank you page.
-            return array(
-                'result' => 'SUCCESS',
-                'redirect' => $this->get_return_url( $order )
-            );
+            $base_url = "https://example.com/v1";
+            $api_endpoint = "/testpay/makepay";
+            $url = $base_url.$api_endpoint;
+            
+            $isPost =1;
+            $req = array("transid"=>$order->get_id(), "utilityref"=>"xxxxxxx", "amount"=>$order->get_total(), "vendor"=>"xxxxxxxx", "msisdn"=>$order->get_billing_phone()());
+            $authorization = base64_encode($api_key);
+            $timestamp = date('c');
+            
+            $signed_fields  = implode(',', array_keys($req));
+            $digest = computeSignature($req, $signed_fields, $timestamp, $api_secret);
+            
+            $response = sendJSONPost($url, $isPost, json_encode($req), $authorization, $digest, $signed_fields, $timestamp);
+            
+            //Based on the response, you can set the the order status to processing or completed if successful:
+            if ($response == 'FAIL') {
+                $order->update_status('Failed', __( 'Payment failed', 'woocommerce' ));
+                //Error handling
+                wc_add_notice( __('Payment error: ', 'woothemes') . 'Transaction failed', 'error' );
+            }
+            else if ($response == 'SUCCESS') {
+                //Payment successful
+                $woocommerce->cart->empty_cart();
+                $order->reduce_order_stock();
+                
+                //Update order status
+                $order->update_status('Processing', __( 'Payment successful, awaiting delivery', 'woocommerce' ));
+                
+                //Return to order-received/thank you page
+                return array(
+                    'result' => 'SUCCESS',
+                    'redirect' => $this->get_return_url( $order )
+                );
+            }
+            else {
+                //Default order status update
+                $order->update_status('On-Hold', __( 'Order could not be completed', 'woocommerce' ));
+                //Error handling
+                wc_add_notice( __('Payment error: ', 'woothemes') . 'Something went wrong with the order during payment', 'error' );
+            }
         }
+        
+        function sendJSONPost($url, $isPost, $json, $authorization, $digest, $signed_fields, $timestamp) {
+            $headers = array(
+              "Content-type: application/json;charset=\"utf-8\"", "Accept: application/json", "Cache-Control: no-cache",
+              "Authorization: SELCOM $authorization",
+              "Digest-Method: HS256",
+              "Digest: $digest",
+              "Timestamp: $timestamp",
+              "Signed-Fields: $signed_fields",
+            );
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            if($isPost){
+              curl_setopt($ch, CURLOPT_POST, 1);
+              curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+            }
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch,CURLOPT_TIMEOUT,90);
+            $result = curl_exec($ch);
+            curl_close($ch);
+            return json_decode($result, true);
+         }
+
+         function computeSignature($parameters, $signed_fields, $request_timestamp, $api_secret){
+            $fields_order = explode(',', $signed_fields);
+            $sign_data = "timestamp=$request_timestamp";
+            foreach ($fields_order as $key) {
+              $sign_data .= "&$key=".$parameters[$key];
+            }
+        
+            //HS256 Signature Method
+            return base64_encode(hash_hmac('sha256', $sign_data, $api_secret, true));
+         }
+
     }
 }
 
+//Finally, add Selcom payment to list of payment methods
 function add_selcom( $methods ) {
     $methods[] = 'SelcomGateway'; 
     return $methods;
