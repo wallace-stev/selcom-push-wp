@@ -78,7 +78,7 @@ function selcom_init() {
             $url = $base_url.$api_endpoint;
             
             $isPost =1;
-            $req = array("transid"=>$order->get_id(), "utilityref"=>"xxxxxxx", "amount"=>$order->get_total(), "vendor"=>"xxxxxxxx", "msisdn"=>$order->get_billing_phone()());
+            $req = array("transid"=>$order->get_id(), "utilityref"=>"xxxxxxx", "amount"=>$order->get_total(), "vendor"=>"xxxxxxxx", "msisdn"=>$order->get_billing_phone());
             $authorization = base64_encode($api_key);
             $timestamp = date('c');
             
@@ -96,7 +96,7 @@ function selcom_init() {
             else if ($response == 'SUCCESS') {
                 //Payment successful
                 $woocommerce->cart->empty_cart();
-                $order->reduce_order_stock();
+                $order->wc_reduce_stock_levels();
                 
                 //Update order status
                 $order->update_status('Processing', __( 'Payment successful, awaiting delivery', 'woocommerce' ));
@@ -113,43 +113,44 @@ function selcom_init() {
                 //Error handling
                 wc_add_notice( __('Payment error: ', 'woothemes') . 'Something went wrong with the order during payment', 'error' );
             }
-        }
-        
-        function sendJSONPost($url, $isPost, $json, $authorization, $digest, $signed_fields, $timestamp) {
-            $headers = array(
-              "Content-type: application/json;charset=\"utf-8\"", "Accept: application/json", "Cache-Control: no-cache",
-              "Authorization: SELCOM $authorization",
-              "Digest-Method: HS256",
-              "Digest: $digest",
-              "Timestamp: $timestamp",
-              "Signed-Fields: $signed_fields",
-            );
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            if($isPost){
-              curl_setopt($ch, CURLOPT_POST, 1);
-              curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
-            }
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch,CURLOPT_TIMEOUT,90);
-            $result = curl_exec($ch);
-            curl_close($ch);
-            return json_decode($result, true);
-         }
-
-         function computeSignature($parameters, $signed_fields, $request_timestamp, $api_secret){
-            $fields_order = explode(',', $signed_fields);
-            $sign_data = "timestamp=$request_timestamp";
-            foreach ($fields_order as $key) {
-              $sign_data .= "&$key=".$parameters[$key];
-            }
-        
-            //HS256 Signature Method
-            return base64_encode(hash_hmac('sha256', $sign_data, $api_secret, true));
-         }
-
+        }      
     }
+}
+
+//Encrypting parameter values
+function computeSignature($parameters, $signed_fields, $request_timestamp, $api_secret){
+    $fields_order = explode(',', $signed_fields);
+    $sign_data = "timestamp=$request_timestamp";
+    foreach ($fields_order as $key) {
+      $sign_data .= "&$key=".$parameters[$key];
+    }
+
+    //HS256 Signature Method
+    return base64_encode(hash_hmac('sha256', $sign_data, $api_secret, true));
+}
+
+//Sending HTTP POST Request
+function sendJSONPost($url, $isPost, $json, $authorization, $digest, $signed_fields, $timestamp) {
+    $headers = array(
+      "Content-type: application/json;charset=\"utf-8\"", "Accept: application/json", "Cache-Control: no-cache",
+      "Authorization: SELCOM $authorization",
+      "Digest-Method: HS256",
+      "Digest: $digest",
+      "Timestamp: $timestamp",
+      "Signed-Fields: $signed_fields",
+    );
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    if($isPost){
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+    }
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch,CURLOPT_TIMEOUT,90);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return json_decode($result, true);
 }
 
 //Finally, add Selcom payment to list of payment methods
