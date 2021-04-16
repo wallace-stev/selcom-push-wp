@@ -28,7 +28,7 @@ function selcom_init() {
             $this->has_fields         = true;
             $this->method_description = 'Pay directly from using Tigopesa or Airtel Money from your mobile phone.';
 
-            //load the settings
+            //Load plugin on WP Dashboard settings
             $this->init_form_fields();
             $this->init_settings();
             $this->enabled = $this->get_option('enabled');
@@ -58,7 +58,7 @@ function selcom_init() {
                     'title'         => __( 'Customer Message', 'woocommerce' ),
                     'type'          => 'textarea',
                     'default'       => 'Pay directly from your mobile phone using Tigopesa or Airtel Money. Conveniently, securely & efficiently.',
-                    'description'   => 'Pay directly from your mobile phone using Tigopesa or Airtel Money. Conveniently, securely & efficiently.',
+                    'description'   => 'This controls the description which the user sees during checkout.',
                 )
             );
         }
@@ -68,53 +68,120 @@ function selcom_init() {
 
             // Get an instance of the WC_Order object
             $order = new WC_Order( $order_id );
-
-            //Process payment via Selcom API using cURL and receive API.            
-            $api_key = 'xxxxxxxxxxxxxxxxxxx';
-            $api_secret = 'xxxxxxxxxxxxxxxxxxxxx';
             
-            $base_url = "https://example.com/v1";
-            $api_endpoint = "/testpay/makepay";
-            $url = $base_url.$api_endpoint;
+            //Selcom API prerequisites
+            $api_key = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+            $api_secret = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+            $vendor = 'xxxxxxxxxx';
+            $base_url = "http://example.com/v1";
             
-            $isPost =1;
-            $req = array("transid"=>$order->get_id(), "utilityref"=>"xxxxxxx", "amount"=>$order->get_total(), "vendor"=>"xxxxxxxx", "msisdn"=>$order->get_billing_phone());
-            $authorization = base64_encode($api_key);
-            $timestamp = date('c');
+            //Minimal order array
+            $min_order = array(
+                "vendor"=>$vendor,
+                "order_id"=>$order->get_id(),
+                "buyer_email"=>$order->get_billing_email(),
+                "buyer_name"=>$order->get_billing_first_name() ." ". $order->get_billing_last_name(),
+                "buyer_phone"=>$order->get_billing_phone(),
+                "amount"=>$order->get_total(),
+                "currency"=>"TZS",
+                "no_of_items"=>$woocommerce->cart->cart_contents_count
+            );
             
-            $signed_fields  = implode(',', array_keys($req));
-            $digest = computeSignature($req, $signed_fields, $timestamp, $api_secret);
+            //Send Minimal Order Request
+            $order_resp = sendMinOrder($min_order, $api_key, $api_secret, $base_url);
             
-            $response = sendJSONPost($url, $isPost, json_encode($req), $authorization, $digest, $signed_fields, $timestamp);
-            
-            //Based on the response, you can set the the order status to processing or completed if successful:
-            if ($response == 'FAIL') {
-                $order->update_status('Failed', __( 'Payment failed', 'woocommerce' ));
-                //Error handling
-                wc_add_notice( __('Payment error: ', 'woothemes') . 'Transaction failed', 'error' );
-            }
-            else if ($response == 'SUCCESS') {
-                //Payment successful
-                $woocommerce->cart->empty_cart();
-                $order->wc_reduce_stock_levels();
-                
+            //Based on the order response, continue implementing USSD Push
+            if ($order_resp->result == 'FAIL') {
                 //Update order status
-                $order->update_status('Processing', __( 'Payment successful, awaiting delivery', 'woocommerce' ));
-                
-                //Return to order-received/thank you page
-                return array(
-                    'result' => 'SUCCESS',
-                    'redirect' => $this->get_return_url( $order )
+                $order->update_status('failed', __( 'Order not created', 'woocommerce' ));
+
+                //Display error message
+                wc_add_notice( __('Error: ', 'woothemes') . 'Order could not be created.', 'error' );
+            }
+            else if ($order_resp->result == 'SUCCESS') {
+                //Order is sent, set Push USSD Request Variables
+                // TODO: Generate a random encrypted transid here
+                $transid = random_function();
+                $push_req = array(
+                    "transid"=> $transid,
+                    "order_id"=>$order->get_id(),
+                    "msisdn"=>$order->get_billing_phone(),
                 );
+                
+                //Send Push USSD Request
+                $pay_resp = sendUSSDPush($push_req, $api_key, $api_secret, $base_url);
+                
+                if ($pay_resp->result == 'FAIL') {
+                    //Update order status
+                    $order->update_status('failed', __( 'Payment failed', 'woocommerce' ));
+
+                    //Display error message
+                    wc_add_notice( __('Error: ', 'woothemes') . 'Payment not completed.', 'error' );
+                }
+                else if ($pay_resp->result == 'SUCCESS') {
+                    //Payment successful, update order status
+                    $order->update_status('processing', __( 'Payment successful, awaiting delivery', 'woocommerce' ));
+                    
+                    //Update update stock & cart information
+                    WC()->cart->empty_cart();
+                    wc_reduce_stock_levels($order);
+
+                    //Return to thank you page
+                    return array(
+                        'result' => 'success',
+                        'redirect' => $this->get_return_url( $order )
+                    );
+                }
+                else {
+                    //Update order status
+                    $order->update_status('on-hold', __( 'Payment could not be completed.', 'woocommerce' ));
+
+                    //Display error message
+                    wc_add_notice( __('Payment error: ', 'woothemes') . 'Something went wrong during payment.', 'error' );
+                }
             }
             else {
-                //Default order status update
-                $order->update_status('On-Hold', __( 'Order could not be completed', 'woocommerce' ));
-                //Error handling
-                wc_add_notice( __('Payment error: ', 'woothemes') . 'Something went wrong with the order during payment', 'error' );
+                //Update order status
+                $order->update_status('on-hold', __( 'Order could not be completed', 'woocommerce' ));
+
+                //Display error message
+                wc_add_notice( __('Order error: ', 'woothemes') . 'Something went wrong with the order.', 'error' );
             }
-        }      
+        }
     }
+}
+
+//Creating a minimal order to send to Checkout API before initiating payment
+function sendMinOrder ($min_order, $api_key, $api_secret, $base_url) {
+    //Set API endpoint
+    $api_endpoint = "/checkout/create-order-minimal";
+    $url = $base_url.$api_endpoint;
+    
+    //Set POST request variables
+    $isPost =1;
+    $timestamp = date('c');
+    $authorization = base64_encode($api_key);
+    $signed_fields  = implode(',', array_keys($min_order));
+    $digest = computeSignature($min_order, $signed_fields, $timestamp, $api_secret);
+    
+    //Make HTTP POST Request for Minimal Order
+    return sendHTTPRequest($url, $isPost, json_encode($min_order), $authorization, $digest, $signed_fields, $timestamp);
+}
+
+function sendUSSDPush ($push_req, $api_key, $api_secret, $base_url) {
+    //Set API endpoint
+    $api_endpoint = "/checkout/wallet-payment";
+    $url = $base_url.$api_endpoint;
+    
+    //Set POST request variables
+    $isPost =1;
+    $timestamp = date('c');
+    $authorization = base64_encode($api_key);
+    $signed_fields  = implode(',', array_keys($push_req));
+    $digest = computeSignature($push_req, $signed_fields, $timestamp, $api_secret);
+    
+    //Make HTTP POST Request for USSD Push to Wallet
+    return sendHTTPRequest($url, $isPost, json_encode($push_req), $authorization, $digest, $signed_fields, $timestamp);
 }
 
 //Encrypting parameter values
@@ -129,8 +196,8 @@ function computeSignature($parameters, $signed_fields, $request_timestamp, $api_
     return base64_encode(hash_hmac('sha256', $sign_data, $api_secret, true));
 }
 
-//Sending HTTP POST Request
-function sendJSONPost($url, $isPost, $json, $authorization, $digest, $signed_fields, $timestamp) {
+//Sending HTTP POST Request to SELCOM API
+function sendHTTPRequest($url, $isPost, $json, $authorization, $digest, $signed_fields, $timestamp) {
     $headers = array(
       "Content-type: application/json;charset=\"utf-8\"", "Accept: application/json", "Cache-Control: no-cache",
       "Authorization: SELCOM $authorization",
@@ -150,7 +217,7 @@ function sendJSONPost($url, $isPost, $json, $authorization, $digest, $signed_fie
     curl_setopt($ch,CURLOPT_TIMEOUT,90);
     $result = curl_exec($ch);
     curl_close($ch);
-    return json_decode($result, true);
+    return json_decode($result);
 }
 
 //Finally, add Selcom payment to list of payment methods
