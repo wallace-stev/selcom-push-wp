@@ -1,2 +1,2 @@
 # epush-selcom-wp
-A plugin to enable Selcom USSD Push to Wallet from a WordPress website running WooCommerce. Currently available for Tigopesa & Airtel Money only.
+A plugin providing a custom solution to enable mobile payments integration via Selcom for WordPress websites running on WooCommerce.
