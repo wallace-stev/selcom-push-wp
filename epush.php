@@ -17,6 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
+require_once ('apiconnect.php');
+
 add_action( 'plugins_loaded', 'selcom_init' );
 
 function selcom_init() {
@@ -194,30 +196,6 @@ function computeSignature($parameters, $signed_fields, $request_timestamp, $api_
 
     //HS256 Signature Method
     return base64_encode(hash_hmac('sha256', $sign_data, $api_secret, true));
-}
-
-//Sending HTTP POST Request to SELCOM API
-function sendHTTPRequest($url, $isPost, $json, $authorization, $digest, $signed_fields, $timestamp) {
-    $headers = array(
-      "Content-type: application/json;charset=\"utf-8\"", "Accept: application/json", "Cache-Control: no-cache",
-      "Authorization: SELCOM $authorization",
-      "Digest-Method: HS256",
-      "Digest: $digest",
-      "Timestamp: $timestamp",
-      "Signed-Fields: $signed_fields",
-    );
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    if($isPost){
-      curl_setopt($ch, CURLOPT_POST, 1);
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
-    }
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch,CURLOPT_TIMEOUT,90);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    return json_decode($result);
 }
 
 //Finally, add Selcom payment to list of payment methods
