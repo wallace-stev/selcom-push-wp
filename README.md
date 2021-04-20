@@ -2,47 +2,48 @@
 A plugin providing a custom solution to enable mobile payments integration via Selcom USSD Push for WordPress websites running on WooCommerce.
 
 ## Motivation
-A short description of the motivation behind the creation and maintenance of the project. This should explain **why** the project exists.
+This plugin comes to provide a comprehensive solution to mobile payments integration for local e-commerce service providers as the demand increases. We found that several developers struggle when it comes to these necessary yet unmet provisions serving as tools to simplify such works.
+
+## Prerequisites
+Before one choses this tool for their particular project(s), it is necessary for them to have developer-level understanding of PHP (Preferrably 7.1.3 and above), WordPress, WooCommerce, and using API(s) as it may come in handy when facing problems. Also, they should contact Selcom and request for merchant account for them to get necessary information such as security tokens and others required to make this plugin work successfully.
 
 ## Code style
 A guide for those wanting to contribute to the project and make improvements to the code.
 
 [![indentation](https://img.shields.io/badge/indentation-tabs-brightgreen)](https://www.codementor.io/@aviaryan/tabs-v-s-spaces-an-analysis-on-why-tabs-are-better-96xr0bg32)
 [![coding-style](https://img.shields.io/badge/style-object--oriented-brightgreen)](https://en.wikipedia.org/wiki/Object-oriented_programming)
- 
-## Screenshots
-Include logo/demo screenshot etc.
 
 ## Languages used
 - [PHP](https://www.php.net)
 
 ## Features
-What makes your project stand out?
+- Send direct USSD Push notification to client's mobile
+- Simplified checkout procedure, with order status updates as payments occur
 
-## Code Example
-Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.
+## Code
+This plugin makes use of [cURL](https://www.php.net/manual/en/book.curl.php) to send HTTP POST requests.<br/>
+Sample code:
+```
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+if($isPost){
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+}
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch,CURLOPT_TIMEOUT,90);
+$result = curl_exec($ch);
+curl_close($ch);
+```
+Alternatively, one might prefer using the [WordPress HTTP API](https://developer.wordpress.org/plugins/http-api/) to do so.
 
-## Installation
-Provide step by step series of examples and explanations about how to get a development env running.
+## Installation & Usage
+Just download the files, open the file **epush.php**, overwrite the *$api_key, $api_secret, $vendor & $base_url* values with the ones provided by Selcom upon merchant account provision. After that, create a random string generator function and return its value to *$transid* ***(See TODO:)***. Finally, upload the plugin to your website, activate it, test it and if no errors occur, you're set to receive mobile payments to your merchant wallet.
 
 ## API Reference
-
-Depending on the size of the project, if it is small and simple enough the reference docs can be added to the README. For medium size to larger projects it is important to at least provide a link to where the API reference docs live.
-
-## How to use?
-If people like your project they’ll want to learn how they can use it. To do so include step by step guide to use your project.
-
-## Contribute
-
-Let people know how they can contribute into your project. A [contributing guideline](https://github.com/zulip/zulip-electron/blob/master/CONTRIBUTING.md) will be a big plus.
-
-## Credits
-Give proper credits. This could be a link to any repo which inspired you to build this project, any blogposts or links to people who contrbuted in this project. 
-
-#### Anything else that seems useful
+- [Selcom API Reference](https://developers.selcommobile.com/#introduction)
+- [WooCommerce API Reference](https://woocommerce.github.io/woocommerce-rest-api-docs/#introduction)
 
 ## License
-[GNU-GPL-3](https://img.shields.io/github/license/wallace-stev/epush-selcom-wp)
-
-
-MIT © [Yourname]()
+[![GNU-GPL-3](https://img.shields.io/github/license/wallace-stev/epush-selcom-wp)](https://www.gnu.org/licenses/gpl-3.0.en.html)
