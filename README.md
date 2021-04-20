@@ -42,7 +42,7 @@ Sample code:
     $result = curl_exec($ch);
     curl_close($ch);
 ```
-Alternatively, one might prefer using the [WordPress HTTP API](https://developer.wordpress.org/plugins/http-api/) to do so.
+Alternatively, one might prefer using the [WordPress HTTP API](https://developer.wordpress.org/plugins/http-api/) to do so (see documentation).
 
 ## Installation & Usage
 Just download the files, open the file **epush.php**, overwrite the *$api_key, $api_secret, $vendor & $base_url* values with the ones provided by Selcom upon merchant account provision. After that, create a random string generator function and return its value to *$transid* ***(See TODO:)***. Finally, upload the plugin to your website, activate it, test it and if no errors occur, you're set to receive mobile payments to your merchant wallet.
