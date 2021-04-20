@@ -53,3 +53,6 @@ Just download the files, open the file **epush.php**, overwrite the *$api_key, $
 
 ## License
 [![GNU-GPL-3](https://img.shields.io/github/license/wallace-stev/epush-selcom-wp)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+
+## Sample Websites
+- [Agiza Master](https://agizamaster.com)
