@@ -50,6 +50,7 @@ Just download the files, open the file **epush.php**, overwrite the *$api_key, $
 ## API Reference
 - [Selcom API Reference](https://developers.selcommobile.com/#introduction)
 - [WooCommerce API Reference](https://woocommerce.github.io/woocommerce-rest-api-docs/#introduction)
+- [WordPress Developer Resources](https://developer.wordpress.org)
 
 ## License
 [![GNU-GPL-3](https://img.shields.io/github/license/wallace-stev/epush-selcom-wp)](https://www.gnu.org/licenses/gpl-3.0.en.html)
