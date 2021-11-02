@@ -1,4 +1,4 @@
-# epush-selcom-wp
+# selcom-push-wp
 A plugin providing a custom solution to enable mobile payments integration via Selcom USSD Push for WordPress websites running on WooCommerce.
 
 
