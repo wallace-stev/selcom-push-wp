@@ -28,8 +28,8 @@ add_filter('plugin_row_meta',  'Register_Plugins_Links', 10, 2);
 function Register_Plugins_Links ($links, $file) {
    $base = plugin_basename(__FILE__);
    if ($file == $base) {
-       $links[] = '<a href="https://github.com/wallace-stev/epush-selcom-wp">' . __('📦 View on Github') . '</a>';
-      $links[] = '<a href="https://github.com/wallace-stev/epush-selcom-wp/issues">' . __('📝 Report an Issue') . '</a>';
+       $links[] = '<a href="https://github.com/wallace-stev/selcom-push-wp">' . __('📦 View on Github') . '</a>';
+      $links[] = '<a href="https://github.com/wallace-stev/selcom-push-wp/issues">' . __('📝 Report an Issue') . '</a>';
        }
    return $links;
 }

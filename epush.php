@@ -1,6 +1,6 @@
 <?php
 /*
-   * Plugin Name: e-Push
+   * Plugin Name: Selcom Push WP
    * Plugin URI: https://www.aspiretz.com/
    * Description: A plugin to enable Selcom USSD Push to Wallet from WooCommerce website. Currently available for Tigopesa & Airtel Money only.
    * Version: 1.0.2
@@ -8,7 +8,7 @@
    * Author URI: https://www.aspiretz.com/
    * License: GNU General Public License v3 or later
    * License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
-   * Text Domain: e-Push
+   * Text Domain: Selcom Push WP
    * GitHub Plugin URI: https://github.com/wallace-stev/epush-selcom-wp 
    * Domain Path: /i18n
 */
