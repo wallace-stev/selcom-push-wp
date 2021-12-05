@@ -9,7 +9,11 @@
    * License: GNU General Public License v3 or later
    * License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
    * Text Domain: Selcom Push WP
+<<<<<<< HEAD
    * GitHub Plugin URI: https://github.com/wallace-stev/epush-selcom-wp 
+=======
+   * GitHub Plugin URI: https://github.com/wallace-stev/selcom-push-wp 
+>>>>>>> 09e88d4c9d27795925550d1ca5af4998169af9e4
    * Domain Path: /i18n
 */
 
