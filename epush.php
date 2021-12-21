@@ -9,11 +9,7 @@
    * License: GNU General Public License v3 or later
    * License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
    * Text Domain: Selcom Push WP
-<<<<<<< HEAD
-   * GitHub Plugin URI: https://github.com/wallace-stev/epush-selcom-wp 
-=======
    * GitHub Plugin URI: https://github.com/wallace-stev/selcom-push-wp 
->>>>>>> 09e88d4c9d27795925550d1ca5af4998169af9e4
    * Domain Path: /i18n
 */
 
@@ -29,10 +25,11 @@ function selcom_init() {
    class SelcomGateway extends WC_Payment_Gateway {
       function __construct(){
          $this->id                 = 'wc_selcompay';
+         $this->icon               = apply_filters('wp_selcom_icon', plugins_url('assets/mobilepay.png' , __FILE__));
          $this->method_title       = 'Selcom USSD Push';
          $this->title              = 'Selcom USSD Push';
          $this->has_fields         = true;
-         $this->method_description = 'Pay directly from using Tigopesa or Airtel Money from your mobile phone.';
+         $this->method_description = 'Pay directly from your mobile phone.';
 
          //Load plugin on WP Dashboard settings
          $this->init_form_fields();
@@ -40,6 +37,10 @@ function selcom_init() {
          $this->enabled = $this->get_option('enabled');
          $this->title = $this->get_option( 'title' );
          $this->description = $this->get_option('description');
+         $this->vendor  = $this->get_option('merchant_id');
+			$this->api_key      = $this->get_option('api_key');
+			$this->api_secret   = $this->get_option('secret_key');
+         $this->api_url   = $this->get_option('api_url');
 
          //process settings with parent method
          add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -57,15 +58,43 @@ function selcom_init() {
                'title'         => __( 'Title', 'woocommerce' ),
                'type'          => 'text',
                'description'   => __( 'This controls the title which the user sees during checkout.', 'woocommerce' ),
-               'default'       => __( 'Pay via Tigopesa / Airtel Money', 'woocommerce' ),
+               'default'       => __( 'Pay via mobile phone', 'woocommerce' ),
                'desc_tip'      => true,
             ),
             'description' => array(
                'title'         => __( 'Customer Message', 'woocommerce' ),
                'type'          => 'textarea',
-               'default'       => 'Pay directly from your mobile phone using Tigopesa or Airtel Money. Conveniently, securely & efficiently.',
+               'default'       => 'Pay directly from your mobile phone. Conveniently, securely & efficiently.',
                'description'   => 'This controls the description which the user sees during checkout.',
-            )
+            ),
+            'merchant_id' => array(
+					'title'       => __('Vendor/Merchant ID', 'woocommerce'),
+					'type'        => 'text',
+					'description' => __('Your merchant id from Selcom.', $this->id),
+					'default'     => '',
+					'desc_tip'    => true,
+				),
+				'api_key'         => array(
+					'title'       => __('API Key', 'woocommerce'),
+					'type'        => 'text',
+					'description' => __('Your API Key from Selcom.', $this->id),
+					'default'     => '',
+					'desc_tip'    => true,
+				),
+				'secret_key'      => array(
+					'title'       => __('Secret Key', 'woocommerce'),
+					'type'        => 'text',
+					'description' => __('Your Secret Key from Selcom.', $this->id),
+					'default'     => '',
+					'desc_tip'    => true,
+            ),
+            'api_url'      => array(
+					'title'       => __('API URL', 'woocommerce'),
+					'type'        => 'text',
+					'description' => __('URL to connect to Selcom API.', $this->id),
+					'default'     => 'https://apigwtest.selcommobile.com/v1',
+					'desc_tip'    => true,
+				)
          );
       }
         
@@ -76,14 +105,14 @@ function selcom_init() {
          $order = new WC_Order( $order_id );
 
          //Selcom API prerequisites
-         $api_key = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-         $api_secret = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-         $vendor = 'xxxxxxxxxx';
-         $base_url = "http://example.com/v1";
+         $api_key = $this->api_key;
+         $api_secret = $this->api_secret;
+         $base_url = $this->api_url;
+         date_default_timezone_set('Africa/Dar_es_Salaam');
 
          //Minimal order array
          $min_order = array(
-            "vendor"=>$vendor,
+            "vendor"=> $this->vendor,
             "order_id"=>$order->get_id(),
             "buyer_email"=>$order->get_billing_email(),
             "buyer_name"=>$order->get_billing_first_name() ." ". $order->get_billing_last_name(),
@@ -96,7 +125,7 @@ function selcom_init() {
          //Send Minimal Order Request
          $order_resp = sendMinOrder($min_order, $api_key, $api_secret, $base_url);
 
-         //Based on the order response, continue implementing USSD Push
+         //Based on the order response, continue implementing USSD Push                        
          if ($order_resp->result == 'FAIL') {
             //Update order status
             $order->update_status('failed', __( 'Order not created', 'woocommerce' ));
@@ -107,11 +136,11 @@ function selcom_init() {
          else if ($order_resp->result == 'SUCCESS') {
             //Order is sent, set Push USSD Request Variables
             // TODO: Generate a random encrypted transid here
-            $transid = random_function();
+            $transid = substr(strtoupper('SPW'.md5(time().$order->get_id().rand (10,1000))),0,8);
             $push_req = array(
                "transid"=> $transid,
                "order_id"=>$order->get_id(),
-               "msisdn"=>$order->get_billing_phone(),
+               "msisdn"=>"255".substr($order->get_billing_phone(), -9),
             );
 
             //Send Push USSD Request
@@ -124,9 +153,9 @@ function selcom_init() {
                //Display error message
                wc_add_notice( __('Error: ', 'woothemes') . 'Payment not completed.', 'error' );
             }
-            else if ($pay_resp->result == 'SUCCESS') {
-               //Payment successful, update order status
-               $order->update_status('processing', __( 'Payment successful, awaiting delivery', 'woocommerce' ));
+            else if ($pay_resp->result == 'SUCCESS' && $pay_resp->payment_status=='COMPLETE') {
+               //Payment successfully initiated, update order status
+               $order->update_status('processing', __( 'Payment is being processed, awaiting delivery', 'woocommerce' ));
 
                //Update update stock & cart information
                WC()->cart->empty_cart();

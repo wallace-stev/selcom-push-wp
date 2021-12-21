@@ -57,3 +57,6 @@ Just download the files, open the file **epush.php**, overwrite the *$api_key, $
 
 ## Sample Websites
 - [Agiza Master](https://agizamaster.com)
+
+## Disclaimer & Copyrights
+Selcom and the Selcom Logo are registered trademarks of Selcom Paytech LTD.
