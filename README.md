@@ -7,7 +7,7 @@ This plugin comes to provide a comprehensive solution to mobile payments integra
 
 
 ## Prerequisites
-Before one choses this tool for their particular project(s), it is necessary for them to have developer-level understanding of PHP (Preferrably 7.1.3 and above), WordPress, WooCommerce, and using API(s) as it may come in handy when facing problems. Also, they should contact Selcom and request for merchant account for them to get necessary information such as security tokens and others required to make this plugin work successfully.
+Before one choses this tool for their particular project(s), it is necessary for them to have developer-level understanding of PHP (Preferrably 7.4 and above), WordPress, WooCommerce, and using API(s) as it may come in handy when facing problems. Also, they should contact Selcom and request for merchant account for them to get necessary information such as security tokens and others required to make this plugin work successfully.
 
 
 ## Code style
@@ -42,10 +42,10 @@ Sample code:
     $result = curl_exec($ch);
     curl_close($ch);
 ```
-Alternatively, one might prefer using the [WordPress HTTP API](https://developer.wordpress.org/plugins/http-api/) to do so (see documentation).
+Alternatively, one might prefer using the [WordPress HTTP API](https://developer.wordpress.org/plugins/http-api/) to do so (click the link to see documentation).
 
 ## Installation & Usage
-Just download the files, open the file **epush.php**, overwrite the *$api_key, $api_secret, $vendor & $base_url* values with the ones provided by Selcom upon merchant account provision. After that, create a random string generator function and return its value to *$transid* ***(See TODO)***. Finally, upload the plugin to your website, activate it, test it and if no errors occur, you're set to receive mobile payments to your merchant wallet.
+Just download the files and install to your website as you would for any WordPress plugin. Activate the plugin then go to WooCommerce payment settings and provide the *API Key, API Secret, Merchant ID & API URL* values with the ones provided by Selcom upon merchant account provision. Finally, activate the payment option, test it and if no errors occur, change to the production URL and you're set to receive mobile payments to your merchant wallet.
 
 ## API Reference
 - [Selcom API Reference](https://developers.selcommobile.com/#introduction)
@@ -58,5 +58,6 @@ Just download the files, open the file **epush.php**, overwrite the *$api_key, $
 ## Sample Websites
 - [Agiza Master](https://agizamaster.com)
 
+
 ## Disclaimer & Copyrights
-Selcom and the Selcom Logo are registered trademarks of Selcom Paytech LTD.
+Selcom and the Selcom Logo are registered trademarks of [Selcom Paytech LTD](https://www.selcom.net).
