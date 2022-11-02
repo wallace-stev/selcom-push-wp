@@ -163,9 +163,15 @@ function selcomInit() {
             wc_add_notice( __('Error: ', 'woothemes') . 'Order could not be created.', 'error');
          }
          elseif ($orderResponse->result == 'SUCCESS') {
+            //Update order status
+            $order->update_status('pending', __('Order has been received, waiting for payment.', 'woocommerce'));
+
+            //Display error message
+            wc_add_notice( __('Update: ', 'woothemes') . 'Order has been created, waiting for payment completion.', 'success');
+
             //Order is sent, set Push USSD Request Variables
             // Generating a random encrypted transid with vendor prefix
-            $transid = substr(strtoupper($vendorPrefix.md5(time().$order->get_id().rand (10,1000))),0,8);
+            $transid = substr(strtoupper(substr($vendorPrefix,0,3).md5(time().$order->get_id().rand (10,1000))),0,12);
             $pushRequest = array(
                "transid"=> $transid,
                "order_id"=>$order->get_id(),
@@ -180,16 +186,17 @@ function selcomInit() {
                $order->update_status('failed', __('Payment failed', 'woocommerce'));
 
                //Display error message
-               wc_add_notice( __('Error: ', 'woothemes') . 'Payment not completed.', 'error');
+               wc_add_notice( __('Payment error: ', 'woothemes') . 'Payment not completed.', 'error');
             }
-            elseif ($paymentResponse->result == 'SUCCESS' && $paymentResponse->payment_status=='COMPLETE') {
+            elseif ($paymentResponse->result == 'PENDING' || $paymentResponse->result=='SUCCESS') {
                //Payment successfully initiated, update order status
-               $order->update_status('processing', __('Payment is being processed, awaiting delivery', 'woocommerce'));
+               $order->update_status('on-hold', __('Payment is being processed or not yet confirmed', 'woocommerce'));
 
-               // TODO: Revisit
-               //Update update stock & cart information
+               //Display error message
+               wc_add_notice( __('Update: ', 'woothemes') . 'Payment has been sent to mobile for completion.', 'success');
+
+               //Update cart information
                WC()->cart->empty_cart();
-               wc_reduce_stock_levels($order);
 
                //Return to thank you page
                return array(
@@ -199,7 +206,7 @@ function selcomInit() {
             }
             else {
                //Update order status
-               $order->update_status('on-hold', __('Payment could not be completed.', 'woocommerce'));
+               $order->update_status('failed', __('Payment could not be completed.', 'woocommerce'));
 
                //Display error message
                wc_add_notice( __('Payment error: ', 'woothemes') . 'Something went wrong during payment.', 'error');
@@ -207,7 +214,7 @@ function selcomInit() {
          }
          else {
             //Update order status
-            $order->update_status('on-hold', __('Order could not be completed', 'woocommerce'));
+            $order->update_status('failed', __('Order could not be completed due to unknown reasons.', 'woocommerce'));
 
             //Display error message
             wc_add_notice( __('Order error: ', 'woothemes') . 'Something went wrong with the order.', 'error');

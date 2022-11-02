@@ -50,27 +50,35 @@ function sendMinOrder ($minOrder, $apiKey, $apiSecret, $baseUrl) {
  
 /* Receive final callback from Selcom API */
 function receiveApiCallback (WP_REST_Request $request) {
-    //Creating an array to hold callback parameters
-    $finalCallback = array();
- 
+
     //Create JSON data object from request object
     $params = json_decode(stripslashes($request->get_body()));
      
     //Validate variables and set response
     if (isset($params)) {
-        //Assign request params
-        $finalCallback['resultCode'] = $params->resulcode;
-        $finalCallback['result'] = $params->result;
-        $finalCallback['paymentStatus'] = $params->payment_status;
-        $finalCallback['orderId'] = $params->order_id;
-        $finalCallback['transactionId'] = $params->transid;
-        $finalCallback['reference'] = $params->reference;
- 
-        return array("error"=>200,"result"=>'Success',"order_id"=>$params->order_id,"message"=>'Callback successful');
+        //Create order object and fetch order for status & stock updates
+        $order = wc_get_order($params->order_id);
+
+        if ($params->result == 'SUCCESS' && $params->payment_status=='COMPLETE') {
+            //Payment successful, update order status to successful
+            $order->update_status('processing', __('Payment is complete, order is being processed', 'woocommerce'));
+
+             //Update item(s) stock in the inventory
+            wc_reduce_stock_levels($order);
+        }
+        else {
+            //Payment failed, update order status to failed
+            $order->update_status('failed', __('Payment failed or was cancelled', 'woocommerce'));
+        }
+
+        $callbackResponse = array("error"=>200,"result"=>'Success',"order_id"=>$params->order_id,"message"=>'Callback successfully received');
     }
     else {
-       return array("error"=>424,"result"=>'Failed',"message"=>'Callback failed');
+       $callbackResponse = array("error"=>418,"result"=>'Failed',"message"=>'Callback failed, please resend');
     }
+
+    //Return immediate acknowledgement to Selcom callback
+    return $callbackResponse;
 }
 
  //Getting order status to complete inventory updates & process delivery
