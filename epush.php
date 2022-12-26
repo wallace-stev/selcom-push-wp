@@ -43,7 +43,7 @@ function selcomInit() {
    class SelcomGateway extends WC_Payment_Gateway {
       public function __construct(){
          $this->id                 = 'wc_selcompay';
-         $this->icon               = apply_filters('wp_selcom_icon', plugins_url('images/selcomlogo.png', __FILE__));
+         $this->icon               = apply_filters('wp_selcom_icon', plugins_url('assets/selcomlogo.png', __FILE__));
          $this->method_title       = 'Selcom USSD Push';
          $this->title              = 'Selcom USSD Push';
          $this->has_fields         = true;
@@ -77,13 +77,13 @@ function selcomInit() {
                'title'         => __('Title', 'woocommerce'),
                'type'          => 'text',
                'description'   => __('This controls the title which the user sees during checkout.', 'woocommerce'),
-               'default'       => __('Pay via mobile phone', 'woocommerce'),
+               'default'       => __('Mobile phone payment \u{1F1F9}\u{1F1FF}', 'woocommerce'),
                'desc_tip'      => true,
             ),
             'description' => array(
                'title'         => __('Customer Message', 'woocommerce'),
                'type'          => 'textarea',
-               'default'       => 'Pay directly from your mobile phone. (Tigo or Airtel)',
+               'default'       => 'Pay directly from mobile phone (Tigo/Airtel).',
                'description'   => 'This controls the description which the user sees during checkout.',
             ),
             'merchant_id' => array(
@@ -157,7 +157,7 @@ function selcomInit() {
          //Based on the order response, continue implementing USSD Push
          if ($orderResponse->result == 'FAIL') {
             //Update order status
-            $order->update_status('failed', __('Order not created', 'woocommerce'));
+            $order->update_status('failed', __('Order not created.', 'woocommerce'));
 
             //Display error message
             wc_add_notice( __('Error: ', 'woothemes') . 'Order could not be created.', 'error');
@@ -183,14 +183,14 @@ function selcomInit() {
 
             if ($paymentResponse->result == 'FAIL') {
                //Update order status
-               $order->update_status('failed', __('Payment failed', 'woocommerce'));
+               $order->update_status('failed', __('Payment failed.', 'woocommerce'));
 
                //Display error message
                wc_add_notice( __('Payment error: ', 'woothemes') . 'Payment not completed.', 'error');
             }
             elseif ($paymentResponse->result == 'PENDING' || $paymentResponse->result=='SUCCESS') {
                //Payment successfully initiated, update order status
-               $order->update_status('on-hold', __('Payment is being processed or not yet confirmed', 'woocommerce'));
+               $order->update_status('on-hold', __('Payment is being processed or not yet confirmed.', 'woocommerce'));
 
                //Display error message
                wc_add_notice( __('Update: ', 'woothemes') . 'Payment has been sent to mobile for completion.', 'success');
@@ -240,4 +240,3 @@ function Register_Plugins_Links ($links, $file) {
    }
    return $links;
 }
-?>

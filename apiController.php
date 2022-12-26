@@ -100,5 +100,3 @@ function receiveApiCallback (WP_REST_Request $request) {
     
     return json_decode($result);
  }
-
-?>
