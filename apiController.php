@@ -5,7 +5,7 @@ require_once 'apiconnect.php';
 add_action('rest_api_init', function() {
     register_rest_route(
        'selcom-push/v2', //Namespace
-       '/selcomstat', //Callback endpoint
+       '/selcom_callback', //Callback endpoint
         array (
           'methods'  => 'POST',
           'callback' => 'receiveApiCallback',
@@ -57,6 +57,7 @@ function receiveApiCallback (WP_REST_Request $request) {
     //Validate variables and set response
     if (isset($params)) {
         //Create order object and fetch order for status & stock updates
+        // TODO: Check if order ID is present and if order exists
         $order = wc_get_order($params->order_id);
 
         if ($params->result == 'SUCCESS' && $params->payment_status=='COMPLETE') {

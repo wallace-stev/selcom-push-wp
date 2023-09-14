@@ -77,7 +77,7 @@ function selcomInit() {
                'title'         => __('Title', 'woocommerce'),
                'type'          => 'text',
                'description'   => __('This controls the title which the user sees during checkout.', 'woocommerce'),
-               'default'       => __('Mobile phone payment \u{1F1F9}\u{1F1FF}', 'woocommerce'),
+               'default'       => __('Mobile money payment', 'woocommerce'),
                'desc_tip'      => true,
             ),
             'description' => array(
