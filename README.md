@@ -55,9 +55,8 @@ Just download the files and install to your website as you would for any WordPre
 ## License
 [![GNU-GPL-3](https://img.shields.io/github/license/wallace-stev/epush-selcom-wp)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-## Sample Websites
-- [Agiza Master](https://agizamaster.com)
-
+<!-- ## Sample Websites
+- [Agiza Master](https://agizamaster.com) -->
 
 ## Disclaimer & Copyrights
 Selcom and the Selcom Logo are registered trademarks of [Selcom Paytech LTD](https://www.selcom.net).
